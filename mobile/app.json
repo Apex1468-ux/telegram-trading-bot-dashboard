@@ -1,0 +1,39 @@
+name: Trading Bot Dashboard
+app:
+  name: trading-bot-mobile
+  version: 1.0.0
+  orientation: portrait
+  icon: ./assets/icon.png
+  splash:
+    image: ./assets/splash.png
+    resizeMode: contain
+    backgroundColor: "#111827"
+  updates:
+    fallbackToCacheTimeout: 0
+  assetBundlePatterns:
+    - "**/*"
+  ios:
+    supportsTabletMode: true
+    bundleIdentifier: com.tradingbot.monster
+  android:
+    adaptiveIcon:
+      foregroundImage: ./assets/adaptive-icon.png
+      backgroundColor: "#111827"
+    package: com.tradingbot.monster
+    versionCode: 1
+  web:
+    favicon: ./assets/favicon.png
+  plugins:
+    - [
+        "expo-screen-orientation",
+        {
+          initialOrientation: "PORTRAIT"
+        }
+      ]
+plugins:
+  - [
+      "expo-notifications",
+      {
+        "icon": "./assets/notification-icon.png"
+      }
+    ]

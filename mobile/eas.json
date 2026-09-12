@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "plugins": [
+      [
+        "eas-cli"
+      ]
+    ]
+  },
+  "build": {
+    "preview": {
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "preview2": {
+      "android": {
+        "buildType": "apk"
+      },
+      "channel": "preview"
+    },
+    "preview3": {
+      "android": {
+        "buildType": "apk"
+      },
+      "channel": "preview3"
+    },
+    "production": {
+      "android": {
+        "buildType": "apk"
+      },
+      "channel": "production"
+    }
+  },
+  "submit": {
+    "production": {
+      "android": {
+        "serviceAccount": "./service-account.json",
+        "track": "internal"
+      }
+    }
+  }
+}
