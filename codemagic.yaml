@@ -1,0 +1,22 @@
+workflows:
+  monster-dashboard:
+    name: Monster Dashboard APK
+    instance_type: mac_mini_m2
+    environment:
+      groups:
+        - default
+    scripts:
+      - name: Extract Monster project
+        script: |
+          rm -rf monster_source
+          mkdir monster_source
+          unzip -o Monster_Dashboard_CODEMAGIC_READY.zip -d monster_source
+
+      - name: Build Monster APK
+        script: |
+          cd monster_source
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+    artifacts:
+      - monster_source/app/build/outputs/apk/debug/*.apk
