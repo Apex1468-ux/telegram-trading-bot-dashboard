@@ -40,20 +40,12 @@ workflows:
         script: |
           mkdir -p ~/.local/share/Codemagic
           echo "$EAS_TOKEN" > ~/.local/share/Codemagic/token.json
-        env:
-          EAS_TOKEN: $EAS_TOKEN
       
       - name: Setup Android credentials
         script: |
           cd $CM_BUILD_DIR/mobile
-          
-          # Create keystore directory
           mkdir -p ~/.android
-          
-          # Decode and write keystore
           echo "$ANDROID_KEYSTORE_B64" | base64 --decode > ~/.android/trading-bot.keystore
-          
-          # Create keystore properties
           mkdir -p android
           cat > android/keystore.properties << EOF
           storeFile=~/.android/trading-bot.keystore
@@ -61,24 +53,12 @@ workflows:
           keyAlias=$ANDROID_KEY_ALIAS
           keyPassword=$ANDROID_KEY_PASSWORD
           EOF
-        env:
-          ANDROID_KEYSTORE_B64: $ANDROID_KEYSTORE_B64
-          ANDROID_KEYSTORE_PASSWORD: $ANDROID_KEYSTORE_PASSWORD
-          ANDROID_KEY_ALIAS: $ANDROID_KEY_ALIAS
-          ANDROID_KEY_PASSWORD: $ANDROID_KEY_PASSWORD
       
       - name: Build APK with EAS
         script: |
           cd $CM_BUILD_DIR/mobile
-          
-          # Login to EAS
           eas login --username $EAS_USERNAME --password $EAS_PASSWORD --non-interactive
-          
-          # Build APK
           eas build --platform android --local --output=$CM_BUILD_DIR/app.apk
-        env:
-          EAS_USERNAME: $EAS_USERNAME
-          EAS_PASSWORD: $EAS_PASSWORD
       
       - name: Verify APK
         script: |
@@ -94,18 +74,12 @@ workflows:
         script: |
           mkdir -p ~/.config/codemagic
           echo "$GOOGLE_PLAY_SERVICE_ACCOUNT_JSON" > ~/.config/codemagic/service-account.json
-        env:
-          GOOGLE_PLAY_SERVICE_ACCOUNT_JSON: $GOOGLE_PLAY_SERVICE_ACCOUNT_JSON
       
       - name: Deploy to Google Play Internal Testing
         script: |
           cd $CM_BUILD_DIR
-          
-          # Install Python dependencies
           pip3 install --upgrade pip
           pip3 install google-auth-oauthlib google-auth-httplib2 google-api-python-client
-          
-          # Python script to upload to Play Store
           python3 << 'PYTHON_SCRIPT'
           import json
           import sys
@@ -113,7 +87,6 @@ workflows:
           from googleapiclient.discovery import build
           from googleapiclient.http import MediaFileUpload
           
-          # Load credentials
           with open('~/.config/codemagic/service-account.json'.replace('~', '/Users/builder'), 'r') as f:
               service_account_info = json.load(f)
           
@@ -126,12 +99,10 @@ workflows:
           package_name = 'com.tradingbot.monster'
           apk_path = '/Users/builder/app.apk'
           
-          # Create edit
           edit_request = service.edits().insert(body={}, packageName=package_name)
           edit_response = edit_request.execute()
           edit_id = edit_response['id']
           
-          # Upload APK
           apk_response = service.edits().apks().upload(
               editId=edit_id,
               packageName=package_name,
@@ -140,7 +111,6 @@ workflows:
           
           print(f"APK uploaded: {apk_response['versionCode']}")
           
-          # Update track to internal testing
           track_response = service.edits().tracks().update(
               editId=edit_id,
               packageName=package_name,
@@ -148,7 +118,6 @@ workflows:
               body={'releases': [{'name': '1.0.0', 'versionCodes': [str(apk_response['versionCode'])], 'status': 'completed'}]}
           ).execute()
           
-          # Commit
           commit_response = service.edits().commit(
               editId=edit_id,
               packageName=package_name
@@ -156,7 +125,6 @@ workflows:
           
           print("✓ Successfully deployed to Google Play Internal Testing")
           PYTHON_SCRIPT
-        ignore_failure: true
     
     artifacts:
       - $CM_BUILD_DIR/app.apk
@@ -165,18 +133,17 @@ workflows:
       email:
         recipients:
           - $ADMIN_EMAIL
-        notify:
-          success: true
-          failure: true
+        notify_on_build_start: true
+        notify_on_build_failure: true
+        notify_on_build_completion: true
       
       slack:
         channel: $SLACK_CHANNEL
         notify_on_build_start: true
-        messages:
-          success: |
-            ✅ Build #$BUILD_NUMBER succeeded
-            APK: $CM_BUILD_DIR/app.apk
-            Deployed to Google Play Internal Testing
-          failure: |
-            ❌ Build #$BUILD_NUMBER failed
-            Check logs for details
+        success: |
+          ✅ Build #$BUILD_NUMBER succeeded
+          APK: $CM_BUILD_DIR/app.apk
+          Deployed to Google Play Internal Testing
+        failure: |
+          ❌ Build #$BUILD_NUMBER failed
+          Check logs for details
